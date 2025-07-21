@@ -1,0 +1,158 @@
+{
+  "Allenhurst": {
+    "coordinates": { "north": "40.23594", "west": "74.002417" }
+  },
+  "Asbury Park": {
+    "coordinates": { "north": "40.222884", "west": "74.010232" }
+  },
+  "Atlantic City": {
+    "coordinates": { "north": "39.3637", "west": "74.4102" }
+  },
+  "Avalon": {
+    "coordinates": { "north": "39.086453", "west": "74.739003" }
+  },
+  "Avon-by-the-Sea": {
+    "coordinates": { "north": "40.191418", "west": "74.015105" }
+  },
+  "Barnegat Light": {
+    "coordinates": { "north": "39.753505", "west": "74.104953" }
+  },
+  "Bay Head": {
+    "coordinates": { "north": "40.070315", "west": "74.048162" }
+  },
+  "Beach Haven": {
+    "coordinates": { "north": "39.576031", "west": "74.251791" }
+  },
+  "Belmar": {
+    "coordinates": { "north": "40.180", "west": "74.024" }
+  },
+  "Bradley Beach": {
+    "coordinates": { "north": "40.201604", "west": "74.012056" }
+  },
+  "Brick": {
+    "coordinates": { "north": "40.061736", "west": "74.10962" }
+  },
+  "Brigantine": {
+    "coordinates": { "north": "39.4100", "west": "74.3650" }
+  },
+  "Cape May": {
+    "coordinates": { "north": "38.9333", "west": "74.9214" }
+  },
+  "Cape May Point": {
+    "coordinates": { "north": "38.936909", "west": "74.965374" }
+  },
+  "Corson's Inlet State Park (Strathmere)": {
+    "coordinates": { "north": "39.217208", "west": "74.646256" }
+  },
+  "Deal": {
+    "coordinates": { "north": "40.249701", "west": "73.997458" }
+  },
+  "Gunnison Beach": {
+    "coordinates": { "north": "40.4600", "west": "73.9956" }
+  },
+  "Harvey Cedars": {
+    "coordinates": { "north": "39.699578", "west": "74.141511" }
+  },
+  "Island Beach State Park (Berkeley Twp.)": {
+    "coordinates": { "north": "39.905272", "west": "74.081431" }
+  },
+  "Keansburg": {
+    "coordinates": { "north": "40.451869", "west": "74.155634" }
+  },
+  "Lavallette": {
+    "coordinates": { "north": "39.969474", "west": "74.07188" }
+  },
+  "Loch Arbour": {
+    "coordinates": { "north": "40.232296", "west": "74.000008" }
+  },
+  "Long Beach": {
+    "coordinates": { "north": "39.60155", "west": "74.226367" }
+  },
+  "Long Branch": {
+    "coordinates": { "north": "40.295372", "west": "73.989899" }
+  },
+  "Longport": {
+    "coordinates": { "north": "39.311337", "west": "74.526957" }
+  },
+  "Manasquan": {
+    "coordinates": { "north": "40.113032", "west": "74.036886" }
+  },
+  "Mantoloking": {
+    "coordinates": { "north": "40.056688", "west": "74.04816" }
+  },
+  "Margate City": {
+    "coordinates": { "north": "39.330913", "west": "74.506849" }
+  },
+  "Monmouth Beach": {
+    "coordinates": { "north": "40.335895", "west": "73.985608" }
+  },
+  "North Wildwood": {
+    "coordinates": { "north": "39.005944", "west": "74.797505" }
+  },
+  "Ocean City": {
+    "coordinates": { "north": "39.269523", "west": "74.599797" }
+  },
+  "Ocean Grove (Neptune)": {
+    "coordinates": { "north": "40.21182", "west": "74.006944" }
+  },
+  "Ortley Beach (Toms River)": {
+    "coordinates": { "north": "39.955143", "west": "74.07961" }
+  },
+  "Point Pleasant Beach": {
+    "coordinates": { "north": "40.092566", "west": "74.045173" }
+  },
+  "Sandy Hook (Highlands)": {
+    "coordinates": { "north": "40.4530", "west": "73.9950" }
+  },
+  "Sea Bright": {
+    "coordinates": { "north": "40.3614", "west": "73.9742" }
+  },
+  "Sea Girt": {
+    "coordinates": { "north": "40.130", "west": "74.035" }
+  },
+  "Sea Isle City": {
+    "coordinates": { "north": "39.150781", "west": "74.702732" }
+  },
+  "Seaside Heights": {
+    "coordinates": { "north": "39.944912", "west": "74.07829" }
+  },
+  "Seaside Park": {
+    "coordinates": { "north": "39.926369", "west": "74.078711" }
+  },
+  "Seven Presidents Oceanfront Park (Long Branch)": {
+    "coordinates": { "north": "40.31441", "west": "73.97701" }
+  },
+  "Ship Bottom": {
+    "coordinates": { "north": "39.645354", "west": "74.183003" }
+  },
+  "Spring Lake": {
+    "coordinates": { "north": "40.153764", "west": "74.026853" }
+  },
+  "Stone Harbor": {
+    "coordinates": { "north": "39.041691", "west": "74.768837" }
+  },
+  "Strathmere (Upper Twp.)": {
+    "coordinates": { "north": "39.19614", "west": "74.659412" }
+  },
+  "Surf City": {
+    "coordinates": { "north": "39.6586", "west": "74.1683" }
+  },
+  "Ventnor City": {
+    "coordinates": { "north": "39.342076", "west": "74.482649" }
+  },
+  "Villas (Lower Twp.)": {
+    "coordinates": { "north": "39.016266", "west": "74.935969" }
+  },
+  "Union Beach": {
+    "coordinates": { "north": "40.44749", "west": "74.170046" }
+  },
+  "West Wildwood": {
+    "coordinates": { "north": "39.000598", "west": "74.823573" }
+  },
+  "Wildwood": {
+    "coordinates": { "north": "38.988914", "west": "74.819824" }
+  },
+  "Wildwood Crest": {
+    "coordinates": { "north": "38.9700", "west": "74.8300" }
+  }
+}

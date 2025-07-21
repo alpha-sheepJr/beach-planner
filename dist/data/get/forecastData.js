@@ -1,0 +1,12 @@
+import db from '../DB.js';
+// Implementation
+export function getData(beachId, granularity, type) {
+    const table = `${granularity}_${type}`;
+    const stmt = db.prepare(`
+    SELECT * FROM ${table}
+    WHERE beach_id = ?
+    ORDER BY date ASC
+  `);
+    const raw = stmt.all(beachId);
+    return raw;
+}
