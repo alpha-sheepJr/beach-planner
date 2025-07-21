@@ -2,6 +2,6 @@
 
 /tests
 
-node_modules
+node_modules/
 
-csv_exports
+csv_exports/
