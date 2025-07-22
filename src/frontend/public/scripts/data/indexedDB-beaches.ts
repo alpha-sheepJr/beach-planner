@@ -1,5 +1,5 @@
 import { ISODateString } from "../../../../services/openMeteoService.js";
-import { DailyWeatherData } from "../../../../data/get/forecastData.js";
+import { DailyWeatherData, DailyMarineData } from "../../../../data/get/forecastData.js";
 
 interface BeachData {
   id: number;
@@ -10,7 +10,7 @@ interface BeachData {
 
 class ForecastDB {
   private dbName = "application_database";
-  private dbVersion = 3; // bump version if you already had v2
+  private dbVersion = 4; // bump version if you already had v2
 
   // Fetch helper for beaches
   private async fetchBeaches(): Promise<BeachData[]> {
@@ -38,10 +38,23 @@ class ForecastDB {
     }
   }
 
+  private async fetchDailyMarine(): Promise<DailyMarineData[]> {
+    const url = "/api/daily_marine_data";
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Status ${response.status}`);
+      return (await response.json()) as DailyMarineData[];
+    } catch (error) {
+      console.error("Fetch daily marine error:", error);
+      return [];
+    }
+  }
+
   // Create stores and populate with fetched data
   async initializeDatabase(): Promise<void> {
     const beaches = await this.fetchBeaches();
     const dailyWeather = await this.fetchDailyWeather();
+    const dailyMarine = await this.fetchDailyMarine(); // ⬅️ Add this line
 
     return new Promise<void>((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.dbVersion);
@@ -63,19 +76,30 @@ class ForecastDB {
           dailyWeatherStore.createIndex("beach_id", "beach_id", { unique: false });
           dailyWeatherStore.createIndex("date", "date", { unique: false });
           dailyWeatherStore.createIndex("metrics", "metrics", { unique: false });
-          // add other indexes as needed
+          dailyWeatherStore.createIndex("sunrise", "sunrise", { unique: false });
+          dailyWeatherStore.createIndex("sunset", "sunset", { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains("daily_marine")) {
+          const dailyMarineStore = db.createObjectStore("daily_marine", { keyPath: "id" });
+          dailyMarineStore.createIndex("beach_id", "beach_id", { unique: false });
+          dailyMarineStore.createIndex("date", "date", { unique: false });
+          dailyMarineStore.createIndex("metrics", "metrics", { unique: false });
         }
       };
 
       request.onsuccess = () => {
         const db = request.result;
-        const tx = db.transaction(["beaches", "daily_weather"], "readwrite");
+        const tx = db.transaction(["beaches", "daily_weather", "daily_marine"], "readwrite"); // ⬅️ Include daily_marine
 
         const beachesStore = tx.objectStore("beaches");
         beaches.forEach((beach) => beachesStore.put(beach));
 
         const dailyWeatherStore = tx.objectStore("daily_weather");
         dailyWeather.forEach((item) => dailyWeatherStore.put(item));
+
+        const dailyMarineStore = tx.objectStore("daily_marine");
+        dailyMarine.forEach((item) => dailyMarineStore.put(item)); // ⬅️ Add this line
 
         tx.oncomplete = () => {
           db.close();
@@ -88,6 +112,7 @@ class ForecastDB {
       };
     });
   }
+
 
   getAllBeaches(): Promise<BeachData[]> {
     return new Promise((resolve, reject) => {
@@ -124,7 +149,27 @@ class ForecastDB {
       };
     });
   }
+
+  getAllDailyMarine(): Promise<DailyMarineData[]> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, this.dbVersion);
+
+      request.onerror = () => reject("Failed to open IndexedDB");
+
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction("daily_marine", "readonly");
+        const store = tx.objectStore("daily_marine");
+        const getAllRequest = store.getAll();
+
+        getAllRequest.onsuccess = () => resolve(getAllRequest.result as DailyMarineData[]);
+        getAllRequest.onerror = () => reject("Failed to retrieve daily marine data");
+      };
+    });
+  }
 }
+
+
 
 // Usage example:
 
@@ -134,11 +179,12 @@ db.initializeDatabase()
   .then(() => {
     console.log("DB initialized and populated");
 
-    return Promise.all([db.getAllBeaches(), db.getAllDailyWeather()]);
+    return Promise.all([db.getAllBeaches(), db.getAllDailyWeather(), db.getAllDailyMarine()]);
   })
-  .then(([beaches, dailyWeather]) => {
+  .then(([beaches, dailyWeather, dailyMarine]) => {
     console.log("Beaches:", beaches);
     console.log("Daily Weather Data:", dailyWeather);
+    console.log("Daily Marine Data:", dailyMarine);
   })
   .catch((error) => {
     console.error("IndexedDB error:", error);

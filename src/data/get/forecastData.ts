@@ -84,3 +84,12 @@ export function getAllDailyWeather(): DailyWeatherData[] {
   const raw = stmt.all();
   return raw as DailyWeatherData[];
 }
+
+export function getAllDailyMarine(): DailyMarineData[] {
+  const stmt = db.prepare(`
+    SELECT * FROM daily_marine
+    ORDER BY date ASC
+  `);
+  const raw = stmt.all();
+  return raw as DailyMarineData[];
+}

@@ -18,3 +18,11 @@ export function getAllDailyWeather() {
     const raw = stmt.all();
     return raw;
 }
+export function getAllDailyMarine() {
+    const stmt = db.prepare(`
+    SELECT * FROM daily_marine
+    ORDER BY date ASC
+  `);
+    const raw = stmt.all();
+    return raw;
+}
