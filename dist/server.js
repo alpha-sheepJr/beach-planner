@@ -13,10 +13,14 @@ app.use(cors());
 app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.set('views', path.join(__dirname, 'src/views'));
+app.set('views', path.join(__dirname, 'frontend/views'));
 app.set('view engine', 'pug');
-app.use(express.static(path.join(__dirname, 'frontend/public')));
-// ✅ Register routes BEFORE starting the server
+// Fix the static file path
+app.use(express.static(path.join(__dirname, '../dist/frontend/public')));
+// Add explicit root route (optional, but recommended)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/frontend/public/index.html'));
+});
 app.use('/api', dataRoutes);
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {

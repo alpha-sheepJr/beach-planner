@@ -15,7 +15,7 @@ interface BaseData {
 }
 
 // More specific types for convenience (optional but helpful)
-interface HourlyWeatherData extends BaseData {
+export interface HourlyWeatherData extends BaseData {
   metrics: {
     temperature_2m: number;
     precipitation_probability: number;
@@ -25,7 +25,7 @@ interface HourlyWeatherData extends BaseData {
   };
 }
 
-interface DailyWeatherData extends BaseData {
+export interface DailyWeatherData extends BaseData {
   metrics: {
     temperature_2m_max: number;
     temperature_2m_min: number;
@@ -38,7 +38,7 @@ interface DailyWeatherData extends BaseData {
   sunset: Date;
 }
 
-interface HourlyMarineData extends BaseData {
+export interface HourlyMarineData extends BaseData {
   metrics: {
     wave_height: number;
     sea_surface_temperature: number;
@@ -50,7 +50,7 @@ interface HourlyMarineData extends BaseData {
   };
 }
 
-interface DailyMarineData extends BaseData {
+export interface DailyMarineData extends BaseData {
   metrics: {
     wave_height_max: number;
   };
@@ -74,4 +74,13 @@ export function getData(beachId: BeachId, granularity: Granularity, type: DataTy
   const raw = stmt.all(beachId);
 
   return raw as BaseData[];
+}
+
+export function getAllDailyWeather(): DailyWeatherData[] {
+  const stmt = db.prepare(`
+    SELECT * FROM daily_weather
+    ORDER BY date ASC
+  `);
+  const raw = stmt.all();
+  return raw as DailyWeatherData[];
 }

@@ -10,3 +10,11 @@ export function getData(beachId, granularity, type) {
     const raw = stmt.all(beachId);
     return raw;
 }
+export function getAllDailyWeather() {
+    const stmt = db.prepare(`
+    SELECT * FROM daily_weather
+    ORDER BY date ASC
+  `);
+    const raw = stmt.all();
+    return raw;
+}

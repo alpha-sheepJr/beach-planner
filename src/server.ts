@@ -22,11 +22,11 @@ app.set('views', path.join(__dirname, 'frontend/views'));
 app.set('view engine', 'pug');
 
 // Fix the static file path
-app.use(express.static(path.join(__dirname, 'frontend/public')));
+app.use(express.static(path.join(__dirname, '../dist/frontend/public')));
 
 // Add explicit root route (optional, but recommended)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend/public/index.html'));
+  res.sendFile(path.join(__dirname, '../dist/frontend/public/index.html'));
 });
 
 app.use('/api', dataRoutes);

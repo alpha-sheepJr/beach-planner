@@ -1,4 +1,4 @@
-export class ForecastDB {
+class ForecastDB {
     constructor() {
         this.dbName = "application_database";
         this.dbVersion = 2;
