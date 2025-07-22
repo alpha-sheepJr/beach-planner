@@ -1,5 +1,5 @@
 import { ISODateString } from "../../../../services/openMeteoService.js";
-import { DailyWeatherData, DailyMarineData } from "../../../../data/get/forecastData.js";
+import { DailyWeatherData, DailyMarineData, HourlyWeatherData } from "../../../../data/get/forecastData.js";
 
 interface BeachData {
   id: number;
@@ -10,7 +10,7 @@ interface BeachData {
 
 class ForecastDB {
   private dbName = "application_database";
-  private dbVersion = 4; // bump version if you already had v2
+  private dbVersion = 5; // bump version if you already had v2
 
   // Fetch helper for beaches
   private async fetchBeaches(): Promise<BeachData[]> {
@@ -25,7 +25,7 @@ class ForecastDB {
     }
   }
 
-  // Fetch helper for daily weather
+  // Fetch helpers for dailies
   private async fetchDailyWeather(): Promise<DailyWeatherData[]> {
     const url = "/api/daily_weather_data";
     try {
@@ -50,11 +50,26 @@ class ForecastDB {
     }
   }
 
+  // Fetch helpers for hourlies
+  private async fetchHourlyWeather(): Promise<HourlyWeatherData[]> {
+    const url = "/api/hourly_weather_data";
+    
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Status ${response.status}`);
+      return (await response.json()) as HourlyWeatherData[];
+    } catch (error) {
+      console.error("Fetch hourly weather error:", error);
+      return [];
+    }
+  }
+
   // Create stores and populate with fetched data
   async initializeDatabase(): Promise<void> {
     const beaches = await this.fetchBeaches();
     const dailyWeather = await this.fetchDailyWeather();
-    const dailyMarine = await this.fetchDailyMarine(); // ⬅️ Add this line
+    const dailyMarine = await this.fetchDailyMarine(); 
+    const hourlyWeather = await this.fetchHourlyWeather();
 
     return new Promise<void>((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.dbVersion);
@@ -86,11 +101,18 @@ class ForecastDB {
           dailyMarineStore.createIndex("date", "date", { unique: false });
           dailyMarineStore.createIndex("metrics", "metrics", { unique: false });
         }
+
+        if (!db.objectStoreNames.contains("hourly_weather")) {
+          const hourlyWeatherStore = db.createObjectStore("hourly_weather", { keyPath: "id" });
+          hourlyWeatherStore.createIndex("beach_id", "beach_id", { unique: false });
+          hourlyWeatherStore.createIndex("date", "date", { unique: false });
+          hourlyWeatherStore.createIndex("metrics", "metrics", { unique: false });
+        }
       };
 
       request.onsuccess = () => {
         const db = request.result;
-        const tx = db.transaction(["beaches", "daily_weather", "daily_marine"], "readwrite"); // ⬅️ Include daily_marine
+        const tx = db.transaction(["beaches", "daily_weather", "daily_marine", "hourly_weather"], "readwrite"); 
 
         const beachesStore = tx.objectStore("beaches");
         beaches.forEach((beach) => beachesStore.put(beach));
@@ -99,7 +121,10 @@ class ForecastDB {
         dailyWeather.forEach((item) => dailyWeatherStore.put(item));
 
         const dailyMarineStore = tx.objectStore("daily_marine");
-        dailyMarine.forEach((item) => dailyMarineStore.put(item)); // ⬅️ Add this line
+        dailyMarine.forEach((item) => dailyMarineStore.put(item));
+
+        const hourlyWeatherStore = tx.objectStore("hourly_weather");
+        hourlyWeather.forEach((item) => hourlyWeatherStore.put(item));
 
         tx.oncomplete = () => {
           db.close();
@@ -167,6 +192,24 @@ class ForecastDB {
       };
     });
   }
+
+  getAllHourlyWeather(): Promise<HourlyWeatherData[]> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, this.dbVersion);
+
+      request.onerror = () => reject("Failed to open IndexedDB");
+
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction("hourly_weather", "readonly");
+        const store = tx.objectStore("hourly_weather");
+        const getAllRequest = store.getAll();
+
+        getAllRequest.onsuccess = () => resolve(getAllRequest.result as HourlyWeatherData[]);
+        getAllRequest.onerror = () => reject("Failed to retrieve hourly weather data");
+      };
+    });
+  }
 }
 
 
@@ -179,12 +222,13 @@ db.initializeDatabase()
   .then(() => {
     console.log("DB initialized and populated");
 
-    return Promise.all([db.getAllBeaches(), db.getAllDailyWeather(), db.getAllDailyMarine()]);
+    return Promise.all([db.getAllBeaches(), db.getAllDailyWeather(), db.getAllDailyMarine(), db.getAllHourlyWeather()]);
   })
-  .then(([beaches, dailyWeather, dailyMarine]) => {
+  .then(([beaches, dailyWeather, dailyMarine, hourlyMarine]) => {
     console.log("Beaches:", beaches);
     console.log("Daily Weather Data:", dailyWeather);
     console.log("Daily Marine Data:", dailyMarine);
+    console.log("Hourly Weather Data:", hourlyMarine);
   })
   .catch((error) => {
     console.error("IndexedDB error:", error);

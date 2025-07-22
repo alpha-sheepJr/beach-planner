@@ -93,3 +93,12 @@ export function getAllDailyMarine(): DailyMarineData[] {
   const raw = stmt.all();
   return raw as DailyMarineData[];
 }
+
+export function getAllHourlyWeather(): HourlyWeatherData[] {
+  const stmt = db.prepare(`
+    SELECT * FROM hourly_weather
+    ORDER BY date ASC
+  `);
+  const raw = stmt.all();
+  return raw as HourlyWeatherData[];
+}

@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { getAllBeaches } from "../data/get/beachData.js";
 import type { BeachData } from '../data/get/beachData.js';
-import { getAllDailyWeather, getAllDailyMarine } from '../data/get/forecastData.js';
-import type { DailyWeatherData, DailyMarineData } from '../data/get/forecastData.js';
+import { getAllDailyWeather, getAllDailyMarine, getAllHourlyWeather } from '../data/get/forecastData.js';
+import type { DailyWeatherData, DailyMarineData, HourlyWeatherData } from '../data/get/forecastData.js';
 
 
 export function getBeachesController(req: Request, res: Response) {
@@ -38,5 +38,18 @@ export function getDailyMarineController(req: Request, res: Response) {
     } catch (err) {
         console.error('Failed to retrieve daily marine data:', err);
         res.status(500).json({ error: 'Failed to retrieve daily marine data' });
+    }
+}
+
+export function getHourlyWeatherController(req: Request, res: Response) {
+    try {
+        const hourlyWeather: HourlyWeatherData[] = getAllHourlyWeather();
+        if (!hourlyWeather || hourlyWeather.length === 0) {
+            return res.status(404).json({ error: 'No hourly weather data found' });
+        }
+        res.status(200).json(hourlyWeather);
+    } catch (err) {
+        console.error('Failed to retrieve hourly weather data:', err);
+        res.status(500).json({ error: 'Failed to retrieve hourly weather data' });
     }
 }

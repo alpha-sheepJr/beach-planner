@@ -26,3 +26,11 @@ export function getAllDailyMarine() {
     const raw = stmt.all();
     return raw;
 }
+export function getAllHourlyWeather() {
+    const stmt = db.prepare(`
+    SELECT * FROM hourly_weather
+    ORDER BY date ASC
+  `);
+    const raw = stmt.all();
+    return raw;
+}
