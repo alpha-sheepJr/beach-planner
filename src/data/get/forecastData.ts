@@ -56,13 +56,13 @@ export interface DailyMarineData extends BaseData {
   };
 }
 
-// Overload declarations for getData function
+// --- getData Overloads ---
 export function getData(beachId: BeachId, granularity: "hourly", type: "weather"): HourlyWeatherData[];
 export function getData(beachId: BeachId, granularity: "hourly", type: "marine"): HourlyMarineData[];
 export function getData(beachId: BeachId, granularity: "daily", type: "weather"): DailyWeatherData[];
 export function getData(beachId: BeachId, granularity: "daily", type: "marine"): DailyMarineData[];
 
-// Implementation
+// --- getData Implementation ---
 export function getData(beachId: BeachId, granularity: Granularity, type: DataType): BaseData[] {
   const table = `${granularity}_${type}`;
   const stmt = db.prepare(`
@@ -73,32 +73,43 @@ export function getData(beachId: BeachId, granularity: Granularity, type: DataTy
 
   const raw = stmt.all(beachId);
 
-  return raw as BaseData[];
+  // Type narrowing
+  if (granularity === "hourly" && type === "weather") {
+    return raw as HourlyWeatherData[];
+  } else if (granularity === "hourly" && type === "marine") {
+    return raw as HourlyMarineData[];
+  } else if (granularity === "daily" && type === "weather") {
+    return raw as DailyWeatherData[];
+  } else {
+    return raw as DailyMarineData[];
+  }
 }
 
-export function getAllDailyWeather(): DailyWeatherData[] {
-  const stmt = db.prepare(`
-    SELECT * FROM daily_weather
-    ORDER BY date ASC
-  `);
-  const raw = stmt.all();
-  return raw as DailyWeatherData[];
-}
 
-export function getAllDailyMarine(): DailyMarineData[] {
-  const stmt = db.prepare(`
-    SELECT * FROM daily_marine
-    ORDER BY date ASC
-  `);
-  const raw = stmt.all();
-  return raw as DailyMarineData[];
-}
+// --- getAllForecastData Overloads ---
+export function getAllForecastData(granularity: "hourly", type: "weather"): HourlyWeatherData[];
+export function getAllForecastData(granularity: "hourly", type: "marine"): HourlyMarineData[];
+export function getAllForecastData(granularity: "daily", type: "weather"): DailyWeatherData[];
+export function getAllForecastData(granularity: "daily", type: "marine"): DailyMarineData[];
 
-export function getAllHourlyWeather(): HourlyWeatherData[] {
+// --- getAllForecastData Implementation ---
+export function getAllForecastData(granularity: Granularity, type: DataType): BaseData[] {
+  const table = `${granularity}_${type}`;
   const stmt = db.prepare(`
-    SELECT * FROM hourly_weather
+    SELECT * FROM ${table}
     ORDER BY date ASC
   `);
+
   const raw = stmt.all();
-  return raw as HourlyWeatherData[];
+
+  // Type narrowing
+  if (granularity === "hourly" && type === "weather") {
+    return raw as HourlyWeatherData[];
+  } else if (granularity === "hourly" && type === "marine") {
+    return raw as HourlyMarineData[];
+  } else if (granularity === "daily" && type === "weather") {
+    return raw as DailyWeatherData[];
+  } else {
+    return raw as DailyMarineData[];
+  }
 }

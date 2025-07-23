@@ -1,5 +1,5 @@
 import db from '../DB.js';
-// Implementation
+// --- getData Implementation ---
 export function getData(beachId, granularity, type) {
     const table = `${granularity}_${type}`;
     const stmt = db.prepare(`
@@ -8,29 +8,39 @@ export function getData(beachId, granularity, type) {
     ORDER BY date ASC
   `);
     const raw = stmt.all(beachId);
-    return raw;
+    // Type narrowing
+    if (granularity === "hourly" && type === "weather") {
+        return raw;
+    }
+    else if (granularity === "hourly" && type === "marine") {
+        return raw;
+    }
+    else if (granularity === "daily" && type === "weather") {
+        return raw;
+    }
+    else {
+        return raw;
+    }
 }
-export function getAllDailyWeather() {
+// --- getAllForecastData Implementation ---
+export function getAllForecastData(granularity, type) {
+    const table = `${granularity}_${type}`;
     const stmt = db.prepare(`
-    SELECT * FROM daily_weather
+    SELECT * FROM ${table}
     ORDER BY date ASC
   `);
     const raw = stmt.all();
-    return raw;
-}
-export function getAllDailyMarine() {
-    const stmt = db.prepare(`
-    SELECT * FROM daily_marine
-    ORDER BY date ASC
-  `);
-    const raw = stmt.all();
-    return raw;
-}
-export function getAllHourlyWeather() {
-    const stmt = db.prepare(`
-    SELECT * FROM hourly_weather
-    ORDER BY date ASC
-  `);
-    const raw = stmt.all();
-    return raw;
+    // Type narrowing
+    if (granularity === "hourly" && type === "weather") {
+        return raw;
+    }
+    else if (granularity === "hourly" && type === "marine") {
+        return raw;
+    }
+    else if (granularity === "daily" && type === "weather") {
+        return raw;
+    }
+    else {
+        return raw;
+    }
 }

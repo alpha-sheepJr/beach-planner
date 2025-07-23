@@ -1,5 +1,10 @@
 import { ISODateString } from "../../../../services/openMeteoService.js";
-import { DailyWeatherData, DailyMarineData, HourlyWeatherData } from "../../../../data/get/forecastData.js";
+import {
+  DailyWeatherData,
+  DailyMarineData,
+  HourlyWeatherData,
+  HourlyMarineData
+} from "../../../../data/get/forecastData.js";
 
 interface BeachData {
   id: number;
@@ -8,70 +13,88 @@ interface BeachData {
   longitude: number;
 }
 
+type ForecastStoreName =
+  | "daily_weather"
+  | "hourly_weather"
+  | "daily_marine"
+  | "hourly_marine";
+
 class ForecastDB {
-  private dbName = "application_database";
-  private dbVersion = 5; // bump version if you already had v2
+  dbName = "application_database";
+  dbVersion = 7;
 
-  // Fetch helper for beaches
-  private async fetchBeaches(): Promise<BeachData[]> {
-    const url = "/api/beach_data";
+  // --- Fetching ---
+  private async fetchData(endpoint: string, label: string): Promise<any[]> {
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Status ${response.status}`);
-      return (await response.json()) as BeachData[];
-    } catch (error) {
-      console.error("Fetch beaches error:", error);
+      const response = await fetch(endpoint);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (err) {
+      console.error(`Fetch error (${label}):`, err);
       return [];
     }
   }
 
-  // Fetch helpers for dailies
-  private async fetchDailyWeather(): Promise<DailyWeatherData[]> {
-    const url = "/api/daily_weather_data";
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Status ${response.status}`);
-      return (await response.json()) as DailyWeatherData[];
-    } catch (error) {
-      console.error("Fetch daily weather error:", error);
-      return [];
+  async fetchBeaches(): Promise<BeachData[]> {
+    return this.fetchData("/api/beach_data", "beaches");
+  }
+
+  async fetchForecastData(
+    granularity: "daily" | "hourly",
+    type: "weather" | "marine"
+  ): Promise<any[]> {
+    return this.fetchData(`/api/${granularity}_${type}_data`, `${granularity} ${type}`);
+  }
+
+  // --- Store Creation ---
+  private createObjectStore(
+    db: IDBDatabase,
+    name: string,
+    options: IDBObjectStoreParameters,
+    indexes: { name: string; keyPath: string | string[]; options?: IDBIndexParameters }[]
+  ) {
+    if (!db.objectStoreNames.contains(name)) {
+      const store = db.createObjectStore(name, options);
+      for (const { name: idxName, keyPath, options } of indexes) {
+        store.createIndex(idxName, keyPath, options);
+      }
     }
   }
 
-  private async fetchDailyMarine(): Promise<DailyMarineData[]> {
-    const url = "/api/daily_marine_data";
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Status ${response.status}`);
-      return (await response.json()) as DailyMarineData[];
-    } catch (error) {
-      console.error("Fetch daily marine error:", error);
-      return [];
+  // --- Data Storer ---
+  private async storeRecords<T = any>(storeName: string, records: T[]): Promise<void> {
+    const db = await this.openDatabase();
+    const tx = db.transaction(storeName, "readwrite");
+    const store = tx.objectStore(storeName);
+    for (const item of records) {
+      store.put(item);
     }
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
   }
 
-  // Fetch helpers for hourlies
-  private async fetchHourlyWeather(): Promise<HourlyWeatherData[]> {
-    const url = "/api/hourly_weather_data";
-    
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Status ${response.status}`);
-      return (await response.json()) as HourlyWeatherData[];
-    } catch (error) {
-      console.error("Fetch hourly weather error:", error);
-      return [];
-    }
+  // --- Open DB ---
+  private openDatabase(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, this.dbVersion);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
   }
 
-  // Create stores and populate with fetched data
+  // --- Initialize DB + Populate ---
   async initializeDatabase(): Promise<void> {
-    const beaches = await this.fetchBeaches();
-    const dailyWeather = await this.fetchDailyWeather();
-    const dailyMarine = await this.fetchDailyMarine(); 
-    const hourlyWeather = await this.fetchHourlyWeather();
+    const [beaches, dailyWeather, dailyMarine, hourlyWeather, hourlyMarine] = await Promise.all([
+      this.fetchBeaches(),
+      this.fetchData("/api/daily_weather_data", "daily weather"),
+      this.fetchData("/api/daily_marine_data", "daily marine"),
+      this.fetchData("/api/hourly_weather_data", "hourly weather"),
+      this.fetchData("/api/hourly_marine_data", "hourly marine")
+    ]);
 
-    return new Promise<void>((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.dbVersion);
 
       request.onerror = () => reject("Failed to open IndexedDB");
@@ -79,157 +102,80 @@ class ForecastDB {
       request.onupgradeneeded = () => {
         const db = request.result;
 
-        if (!db.objectStoreNames.contains("beaches")) {
-          const beachesStore = db.createObjectStore("beaches", { keyPath: "id" });
-          beachesStore.createIndex("name", "name", { unique: true });
-          beachesStore.createIndex("latitude", "latitude", { unique: false });
-          beachesStore.createIndex("longitude", "longitude", { unique: false });
-        }
+        this.createObjectStore(db, "beaches", { keyPath: "id" }, [
+          { name: "name", keyPath: "name", options: { unique: true } },
+          { name: "latitude", keyPath: "latitude" },
+          { name: "longitude", keyPath: "longitude" }
+        ]);
 
-        if (!db.objectStoreNames.contains("daily_weather")) {
-          const dailyWeatherStore = db.createObjectStore("daily_weather", { keyPath: "id" });
-          dailyWeatherStore.createIndex("beach_id", "beach_id", { unique: false });
-          dailyWeatherStore.createIndex("date", "date", { unique: false });
-          dailyWeatherStore.createIndex("metrics", "metrics", { unique: false });
-          dailyWeatherStore.createIndex("sunrise", "sunrise", { unique: false });
-          dailyWeatherStore.createIndex("sunset", "sunset", { unique: false });
-        }
+        const forecastStores: ForecastStoreName[] = [
+          "daily_weather",
+          "daily_marine",
+          "hourly_weather",
+          "hourly_marine"
+        ];
 
-        if (!db.objectStoreNames.contains("daily_marine")) {
-          const dailyMarineStore = db.createObjectStore("daily_marine", { keyPath: "id" });
-          dailyMarineStore.createIndex("beach_id", "beach_id", { unique: false });
-          dailyMarineStore.createIndex("date", "date", { unique: false });
-          dailyMarineStore.createIndex("metrics", "metrics", { unique: false });
-        }
-
-        if (!db.objectStoreNames.contains("hourly_weather")) {
-          const hourlyWeatherStore = db.createObjectStore("hourly_weather", { keyPath: "id" });
-          hourlyWeatherStore.createIndex("beach_id", "beach_id", { unique: false });
-          hourlyWeatherStore.createIndex("date", "date", { unique: false });
-          hourlyWeatherStore.createIndex("metrics", "metrics", { unique: false });
+        for (const storeName of forecastStores) {
+          this.createObjectStore(
+            db,
+            storeName,
+            { keyPath: "id" },
+            [
+              { name: "beach_id", keyPath: "beach_id" },
+              { name: "date", keyPath: "date" }
+            ]
+          );
         }
       };
 
-      request.onsuccess = () => {
-        const db = request.result;
-        const tx = db.transaction(["beaches", "daily_weather", "daily_marine", "hourly_weather"], "readwrite"); 
-
-        const beachesStore = tx.objectStore("beaches");
-        beaches.forEach((beach) => beachesStore.put(beach));
-
-        const dailyWeatherStore = tx.objectStore("daily_weather");
-        dailyWeather.forEach((item) => dailyWeatherStore.put(item));
-
-        const dailyMarineStore = tx.objectStore("daily_marine");
-        dailyMarine.forEach((item) => dailyMarineStore.put(item));
-
-        const hourlyWeatherStore = tx.objectStore("hourly_weather");
-        hourlyWeather.forEach((item) => hourlyWeatherStore.put(item));
-
-        tx.oncomplete = () => {
-          db.close();
+      request.onsuccess = async () => {
+        try {
+          await this.storeRecords("beaches", beaches);
+          await this.storeRecords("daily_weather", dailyWeather as DailyWeatherData[]);
+          await this.storeRecords("daily_marine", dailyMarine as DailyMarineData[]);
+          await this.storeRecords("hourly_weather", hourlyWeather as HourlyWeatherData[]);
+          await this.storeRecords("hourly_marine", hourlyMarine as HourlyMarineData[]);
           resolve();
-        };
-
-        tx.onerror = () => {
-          reject("Failed to populate stores");
-        };
+        } catch (err) {
+          reject("Failed to populate stores: " + err);
+        }
       };
     });
   }
 
-
-  getAllBeaches(): Promise<BeachData[]> {
+  // --- Read Methods ---
+  private getAllFromStore<T>(storeName: string): Promise<T[]> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.dbVersion);
-
       request.onerror = () => reject("Failed to open IndexedDB");
-
       request.onsuccess = () => {
         const db = request.result;
-        const tx = db.transaction("beaches", "readonly");
-        const store = tx.objectStore("beaches");
+        const tx = db.transaction(storeName, "readonly");
+        const store = tx.objectStore(storeName);
         const getAllRequest = store.getAll();
-
-        getAllRequest.onsuccess = () => resolve(getAllRequest.result as BeachData[]);
-        getAllRequest.onerror = () => reject("Failed to retrieve beaches");
+        getAllRequest.onsuccess = () => resolve(getAllRequest.result as T[]);
+        getAllRequest.onerror = () => reject("Failed to retrieve data from " + storeName);
       };
     });
+  }
+
+  getAllBeaches(): Promise<BeachData[]> {
+    return this.getAllFromStore<BeachData>("beaches");
   }
 
   getAllDailyWeather(): Promise<DailyWeatherData[]> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.dbVersion);
-
-      request.onerror = () => reject("Failed to open IndexedDB");
-
-      request.onsuccess = () => {
-        const db = request.result;
-        const tx = db.transaction("daily_weather", "readonly");
-        const store = tx.objectStore("daily_weather");
-        const getAllRequest = store.getAll();
-
-        getAllRequest.onsuccess = () => resolve(getAllRequest.result as DailyWeatherData[]);
-        getAllRequest.onerror = () => reject("Failed to retrieve daily weather data");
-      };
-    });
+    return this.getAllFromStore<DailyWeatherData>("daily_weather");
   }
 
   getAllDailyMarine(): Promise<DailyMarineData[]> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.dbVersion);
-
-      request.onerror = () => reject("Failed to open IndexedDB");
-
-      request.onsuccess = () => {
-        const db = request.result;
-        const tx = db.transaction("daily_marine", "readonly");
-        const store = tx.objectStore("daily_marine");
-        const getAllRequest = store.getAll();
-
-        getAllRequest.onsuccess = () => resolve(getAllRequest.result as DailyMarineData[]);
-        getAllRequest.onerror = () => reject("Failed to retrieve daily marine data");
-      };
-    });
+    return this.getAllFromStore<DailyMarineData>("daily_marine");
   }
 
   getAllHourlyWeather(): Promise<HourlyWeatherData[]> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.dbVersion);
+    return this.getAllFromStore<HourlyWeatherData>("hourly_weather");
+  }
 
-      request.onerror = () => reject("Failed to open IndexedDB");
-
-      request.onsuccess = () => {
-        const db = request.result;
-        const tx = db.transaction("hourly_weather", "readonly");
-        const store = tx.objectStore("hourly_weather");
-        const getAllRequest = store.getAll();
-
-        getAllRequest.onsuccess = () => resolve(getAllRequest.result as HourlyWeatherData[]);
-        getAllRequest.onerror = () => reject("Failed to retrieve hourly weather data");
-      };
-    });
+  getAllHourlyMarine(): Promise<HourlyMarineData[]> {
+    return this.getAllFromStore<HourlyMarineData>("hourly_marine");
   }
 }
-
-
-
-// Usage example:
-
-const db = new ForecastDB();
-
-db.initializeDatabase()
-  .then(() => {
-    console.log("DB initialized and populated");
-
-    return Promise.all([db.getAllBeaches(), db.getAllDailyWeather(), db.getAllDailyMarine(), db.getAllHourlyWeather()]);
-  })
-  .then(([beaches, dailyWeather, dailyMarine, hourlyMarine]) => {
-    console.log("Beaches:", beaches);
-    console.log("Daily Weather Data:", dailyWeather);
-    console.log("Daily Marine Data:", dailyMarine);
-    console.log("Hourly Weather Data:", hourlyMarine);
-  })
-  .catch((error) => {
-    console.error("IndexedDB error:", error);
-  });

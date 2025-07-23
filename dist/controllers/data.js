@@ -1,5 +1,6 @@
 import { getAllBeaches } from "../data/get/beachData.js";
-import { getAllDailyWeather, getAllDailyMarine, getAllHourlyWeather } from '../data/get/forecastData.js';
+import { getAllForecastData } from '../data/get/forecastData.js';
+// --- Beaches Controller ---
 export function getBeachesController(req, res) {
     try {
         const beaches = getAllBeaches();
@@ -10,42 +11,25 @@ export function getBeachesController(req, res) {
         res.status(500).json({ error: 'Failed to retrieve beach data' });
     }
 }
-export function getDailyWeatherController(req, res) {
-    try {
-        const dailyWeather = getAllDailyWeather();
-        if (!dailyWeather || dailyWeather.length === 0) {
-            return res.status(404).json({ error: 'No daily weather data found' });
+// --- Forecast Factory Controller ---
+function createForecastController(type, granularity, errorMsg, castFn // 👈 Added to help TS infer correct return type
+) {
+    return (_req, res) => {
+        try {
+            const data = castFn();
+            if (!data || data.length === 0) {
+                return res.status(404).json({ error: `No ${errorMsg} data found` });
+            }
+            res.status(200).json(data);
         }
-        res.status(200).json(dailyWeather);
-    }
-    catch (err) {
-        console.error('Failed to retrieve daily weather data:', err);
-        res.status(500).json({ error: 'Failed to retrieve daily weather data' });
-    }
-}
-export function getDailyMarineController(req, res) {
-    try {
-        const dailyMarine = getAllDailyMarine();
-        if (!dailyMarine || dailyMarine.length === 0) {
-            return res.status(404).json({ error: 'No daily marine data found' });
+        catch (err) {
+            console.error(`Failed to retrieve ${errorMsg} data:`, err);
+            res.status(500).json({ error: `Failed to retrieve ${errorMsg} data` });
         }
-        res.status(200).json(dailyMarine);
-    }
-    catch (err) {
-        console.error('Failed to retrieve daily marine data:', err);
-        res.status(500).json({ error: 'Failed to retrieve daily marine data' });
-    }
+    };
 }
-export function getHourlyWeatherController(req, res) {
-    try {
-        const hourlyWeather = getAllHourlyWeather();
-        if (!hourlyWeather || hourlyWeather.length === 0) {
-            return res.status(404).json({ error: 'No hourly weather data found' });
-        }
-        res.status(200).json(hourlyWeather);
-    }
-    catch (err) {
-        console.error('Failed to retrieve hourly weather data:', err);
-        res.status(500).json({ error: 'Failed to retrieve hourly weather data' });
-    }
-}
+// --- Forecast Controllers ---
+export const getDailyWeatherController = createForecastController("daily", "weather", "daily weather", () => getAllForecastData("daily", "weather"));
+export const getDailyMarineController = createForecastController("daily", "marine", "daily marine", () => getAllForecastData("daily", "marine"));
+export const getHourlyWeatherController = createForecastController("hourly", "weather", "hourly weather", () => getAllForecastData("hourly", "weather"));
+export const getHourlyMarineController = createForecastController("hourly", "marine", "hourly marine", () => getAllForecastData("hourly", "marine"));

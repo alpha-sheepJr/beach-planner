@@ -1,55 +1,60 @@
+// data.ts
 import { Request, Response } from 'express';
 import { getAllBeaches } from "../data/get/beachData.js";
 import type { BeachData } from '../data/get/beachData.js';
-import { getAllDailyWeather, getAllDailyMarine, getAllHourlyWeather } from '../data/get/forecastData.js';
-import type { DailyWeatherData, DailyMarineData, HourlyWeatherData } from '../data/get/forecastData.js';
+import {
+  getAllForecastData,
+  DailyWeatherData,
+  DailyMarineData,
+  HourlyWeatherData,
+  HourlyMarineData
+} from '../data/get/forecastData.js';
 
-
+// --- Beaches Controller ---
 export function getBeachesController(req: Request, res: Response) {
-    try {
-        const beaches: BeachData[] = getAllBeaches();
-        res.status(200).json(beaches);
-    } catch (err) {
-        console.error('Failed to retrieve beaches:', err);
-        res.status(500).json({ error: 'Failed to retrieve beach data' });
-    }
+  try {
+    const beaches: BeachData[] = getAllBeaches();
+    res.status(200).json(beaches);
+  } catch (err) {
+    console.error('Failed to retrieve beaches:', err);
+    res.status(500).json({ error: 'Failed to retrieve beach data' });
+  }
 }
 
-export function getDailyWeatherController(req: Request, res: Response) {
+// --- Forecast Factory Controller ---
+function createForecastController<T>(
+  type: "daily" | "hourly",
+  granularity: "weather" | "marine",
+  errorMsg: string,
+  castFn: () => T[] // 👈 Added to help TS infer correct return type
+) {
+  return (_req: Request, res: Response) => {
     try {
-        const dailyWeather: DailyWeatherData[] = getAllDailyWeather();
-        if (!dailyWeather || dailyWeather.length === 0) {
-            return res.status(404).json({ error: 'No daily weather data found' });
-        }
-        res.status(200).json(dailyWeather);
+      const data = castFn();
+      if (!data || data.length === 0) {
+        return res.status(404).json({ error: `No ${errorMsg} data found` });
+      }
+      res.status(200).json(data);
     } catch (err) {
-        console.error('Failed to retrieve daily weather data:', err);
-        res.status(500).json({ error: 'Failed to retrieve daily weather data' });
+      console.error(`Failed to retrieve ${errorMsg} data:`, err);
+      res.status(500).json({ error: `Failed to retrieve ${errorMsg} data` });
     }
+  };
 }
 
-export function getDailyMarineController(req: Request, res: Response) {
-    try {
-        const dailyMarine: DailyMarineData[] = getAllDailyMarine(); 
-        if (!dailyMarine || dailyMarine.length === 0) {
-            return res.status(404).json({ error: 'No daily marine data found' });
-        }
-        res.status(200).json(dailyMarine);
-    } catch (err) {
-        console.error('Failed to retrieve daily marine data:', err);
-        res.status(500).json({ error: 'Failed to retrieve daily marine data' });
-    }
-}
+// --- Forecast Controllers ---
+export const getDailyWeatherController = createForecastController<DailyWeatherData>(
+  "daily", "weather", "daily weather", () => getAllForecastData("daily", "weather")
+);
 
-export function getHourlyWeatherController(req: Request, res: Response) {
-    try {
-        const hourlyWeather: HourlyWeatherData[] = getAllHourlyWeather();
-        if (!hourlyWeather || hourlyWeather.length === 0) {
-            return res.status(404).json({ error: 'No hourly weather data found' });
-        }
-        res.status(200).json(hourlyWeather);
-    } catch (err) {
-        console.error('Failed to retrieve hourly weather data:', err);
-        res.status(500).json({ error: 'Failed to retrieve hourly weather data' });
-    }
-}
+export const getDailyMarineController = createForecastController<DailyMarineData>(
+  "daily", "marine", "daily marine", () => getAllForecastData("daily", "marine")
+);
+
+export const getHourlyWeatherController = createForecastController<HourlyWeatherData>(
+  "hourly", "weather", "hourly weather", () => getAllForecastData("hourly", "weather")
+);
+
+export const getHourlyMarineController = createForecastController<HourlyMarineData>(
+  "hourly", "marine", "hourly marine", () => getAllForecastData("hourly", "marine")
+);
