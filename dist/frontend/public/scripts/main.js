@@ -1,3 +1,4 @@
+import { SVGMap } from "./svg/initMap.js";
 const worker = new Worker("./scripts/workers/forecastWorker.js", { type: "module" });
 worker.onmessage = (event) => {
     if (event.data.type === "complete") {
@@ -8,3 +9,9 @@ worker.onmessage = (event) => {
     }
 };
 worker.postMessage({ type: 'initialize' });
+const mapContainer = document.getElementById('svg-container');
+if (!(mapContainer instanceof HTMLDivElement)) {
+    throw new Error('Expected a <div> with ID "map-container"');
+}
+const beachMap = new SVGMap("../images/jersey_beaches_map.svg", mapContainer);
+beachMap.init();

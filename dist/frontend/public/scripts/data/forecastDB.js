@@ -137,5 +137,5 @@ export class ForecastDB {
   getAllHourlyMarine(): Promise<HourlyMarineData[]> {
     return this.getAllFromStore<HourlyMarineData>("hourly_marine");
   }
-    
+
 */ 

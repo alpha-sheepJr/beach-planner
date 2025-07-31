@@ -41,4 +41,3 @@ export function getForecastData(
   // Combine all results into one array
   return Promise.all(requests).then((results) => results.flat());
 }
-
