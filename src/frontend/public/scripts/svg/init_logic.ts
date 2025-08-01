@@ -12,8 +12,6 @@ export async function loadSvgMap(
   return svg as SVGSVGElement | null;
 }
 
-
-
 export function getBeachElement(id: string): SVGElement | null {
   const el = document.getElementById(id);
   return el instanceof SVGElement ? el : null;
@@ -26,5 +24,5 @@ export function attachClickHandler(id: string, handler: () => void): void {
 
 export function getAllBeachMarkerIDs(svg: SVGSVGElement): string[] {
   const markers = svg.querySelectorAll('use[id]');
-  return Array.from(markers).map(el => el.id);
+  return Array.from(markers).map(el => el.id).sort();
 }

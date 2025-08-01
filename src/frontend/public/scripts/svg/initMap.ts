@@ -16,8 +16,8 @@ export class SVGMap {
         const beachIds: string[] = SVGMapUtil.getAllBeachMarkerIDs(svg);
         console.log("Found beach markers: ", beachIds);
 
-        beachIds.forEach((id) => {
-            SVGMapUtil.attachClickHandler(id, () => console.log(`Clicked ${id}`));
+        beachIds.forEach((id) => {``
+            SVGMapUtil.attachClickHandler(id, () => window.location.href = `/beach/${id}`);
         });
     }
 }

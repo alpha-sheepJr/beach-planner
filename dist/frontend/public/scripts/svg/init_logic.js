@@ -17,5 +17,5 @@ export function attachClickHandler(id, handler) {
 }
 export function getAllBeachMarkerIDs(svg) {
     const markers = svg.querySelectorAll('use[id]');
-    return Array.from(markers).map(el => el.id);
+    return Array.from(markers).map(el => el.id).sort();
 }

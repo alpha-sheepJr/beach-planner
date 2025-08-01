@@ -1,0 +1,10 @@
+#svg-container svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+#svg-container {
+    width: 400px;
+    margin: 0 auto;
+}
