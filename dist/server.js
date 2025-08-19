@@ -7,6 +7,7 @@ import './data/initDB.js';
 import { fetchAndCacheForecasts } from './data/weatherReports.js';
 import { getData } from './data/get/forecastData.js';
 import dataRoutes from "./routes/data.js";
+import beachRoutes from "./routes/beach.js";
 dotenv.config();
 const app = express();
 app.use(cors());
@@ -22,6 +23,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/frontend/public/index.html'));
 });
 app.use('/api', dataRoutes);
+app.use('/beach', beachRoutes);
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
     console.log(`Server listening on port ${PORT}`);

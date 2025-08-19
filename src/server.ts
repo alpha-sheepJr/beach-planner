@@ -8,6 +8,7 @@ import './data/initDB.js';
 import { fetchAndCacheForecasts } from './data/weatherReports.js';
 import { getData } from './data/get/forecastData.js';
 import dataRoutes from "./routes/data.js";
+import beachRoutes from "./routes/beach.js";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api', dataRoutes);
+app.use('/beach', beachRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
